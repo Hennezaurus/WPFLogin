@@ -13,6 +13,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Security;
+using System.Security.Cryptography;
 
 namespace LoginIn
 {
@@ -39,8 +41,6 @@ namespace LoginIn
             LoadSaveFiles();
         }
 
-
-        // Username box events
         // When the username box is first created
         private void UserName_Initialized(object sender, EventArgs e)
         {
@@ -105,6 +105,7 @@ namespace LoginIn
             }
         }
 
+        // Check to see if the login details match any valid accounts
         private bool MatchesAnyLogin(LoginDetails attempt, out int index)
         {
             // Check through all valid accounts
@@ -113,7 +114,7 @@ namespace LoginIn
                 LoginDetails current = validLogins[i];
 
                 // If we find a match
-                if(attempt.Username == current.Username && attempt.Password == current.Password)
+                if(attempt.Username == current.Username && GetHashString(attempt.Password) == current.Password)
                 {
                     // Return the index and true
                     index = i;
@@ -126,6 +127,7 @@ namespace LoginIn
             return false;
         }
 
+        // Check if the username is unique
         private bool UsernameIsUnique(string username)
         {
             // Look through all logins, see if username already exists
@@ -140,16 +142,23 @@ namespace LoginIn
             return true;
         }
 
+        // Create a new account with the entered details
         private void createAccount_Click(object sender, RoutedEventArgs e)
         {
+            // Is the username already in use?
             bool canCreate = UsernameIsUnique(UserName.Text);
 
+            // If the username is free to use
             if(canCreate)
             {
-                validLogins.Add(new LoginDetails(UserName.Text, passwordBox.Password));
+                // Hash the password for security
+                string passHash = GetHashString(passwordBox.Password);
 
-                // Create a string array with the lines of text
-                string text = UserName.Text + "," + passwordBox.Password + Environment.NewLine;
+                // Create a new login data, and add it to the list
+                validLogins.Add(new LoginDetails(UserName.Text, passHash));
+
+                // Create a csv line in form: username,MD5hashedPassword
+                string text = UserName.Text + "," + passHash + Environment.NewLine;
 
                 // Set a variable to the My Documents path.
                 //string mydocpath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -170,6 +179,7 @@ namespace LoginIn
             }
         }
 
+        // Get all valid logins from saved file, and convert them to LoginDetail objects
         private void LoadSaveFiles()
         {
             // Get current application directory and add our save folder
@@ -191,7 +201,25 @@ namespace LoginIn
                 // Re-Create objects from elements
                 LoginDetails loginAccount = new LoginDetails(details[0], details[1]);
                 validLogins.Add(loginAccount);
+
             }
+        }
+
+        // Private Hash Helper
+        public static byte[] GetHash(string inputString)
+        {
+            HashAlgorithm algorithm = MD5.Create();
+            return algorithm.ComputeHash(Encoding.UTF8.GetBytes(inputString));
+        }
+
+        // Get string from hash
+        public static string GetHashString(string inputString)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (byte b in GetHash(inputString))
+                sb.Append(b.ToString("X2"));
+
+            return sb.ToString();
         }
     }
 }
