@@ -21,11 +21,13 @@ namespace LoginIn
     /// </summary>
     public partial class MainWindow : Window
     {
-        List<int> testTurd = new List<int>();
+        // Create new brush to colour grayed out text with
         SolidColorBrush disabledBrush = new SolidColorBrush();
 
+        // List of all valid accounts which have been created
         List<LoginDetails> validLogins = new List<LoginDetails>();
 
+        // Window constructor
         public MainWindow()
         {
             InitializeComponent();
@@ -42,8 +44,10 @@ namespace LoginIn
         // When the username box is first created
         private void UserName_Initialized(object sender, EventArgs e)
         {
+            // Local reference to me
             TextBox me = (TextBox)sender;
 
+            // Change to disabled brush by default
             me.Foreground = disabledBrush;
         }
 
@@ -90,6 +94,7 @@ namespace LoginIn
             int successfulIndex;
             bool validLogin = MatchesAnyLogin(attempt, out successfulIndex);
 
+            // Display valid, or invalid login message
             if(validLogin)
             {
                 output.Text = string.Format("Success!!!\nYou're allowed in!");
@@ -123,6 +128,7 @@ namespace LoginIn
 
         private bool UsernameIsUnique(string username)
         {
+            // Look through all logins, see if username already exists
             foreach(LoginDetails valid in validLogins)
             {
                 if(valid.Username == username)
